@@ -1,9 +1,9 @@
-#ifndef PA1_LOGGING_H
-#define PA1_LOGGING_H
+#ifndef PA3_LOGGING_H
+#define PA3_LOGGING_H
 
 #include <stdio.h>
 #include "common.h"
-#include "pa1.h"
+#include "pa2345.h"
 #include "process.h"
 
 static const char * const log_pipe_opened_fmt =
@@ -11,12 +11,16 @@ static const char * const log_pipe_opened_fmt =
 
 void log_pipe_opening(FILE * pipe_file, int start, int dst);
 
-void log_process_startup(ProcessDescription * pd);
+void log_process_startup(timestamp_t timestamp, ProcessDescription * pd);
 
-void log_start_message_receival(ProcessDescription * pd);
+void log_start_message_receival(timestamp_t timestamp, ProcessDescription * pd);
 
-void log_process_completion(ProcessDescription * pd);
+void log_process_completion(timestamp_t timestamp, ProcessDescription * pd);
 
-void log_completion_message_receival(ProcessDescription * pd);
+void log_completion_message_receival(timestamp_t timestamp, ProcessDescription * pd);
 
-#endif //PA1_LOGGING_H
+void log_transfer_initiation(timestamp_t timestamp, ProcessDescription * pd, balance_t payload, local_id dst);
+
+void log_transfer_receival(timestamp_t timestamp, ProcessDescription * pd, balance_t payload, local_id src);
+
+#endif //PA3_LOGGING_H

@@ -11,10 +11,12 @@ add_executable(pa1 main.c
         process.h
         util.c
         util.h
-        mutex.c
-        mutex.h
-        work.c
-        work.h
+        clerk.c
+        clerk.h
+        client.c
+        client.h
+        bank_robbery.c
+        banking.h
         pa2345.h
 )
 target_link_libraries(pa1 ${CMAKE_SOURCE_DIR}/libruntime.so)

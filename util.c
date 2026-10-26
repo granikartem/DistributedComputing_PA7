@@ -1,41 +1,26 @@
-#include <string.h>
-#include <errno.h>
 #include "util.h"
 
-local_id parse(int argc, char* argv[], int * mutexl){
-    int n = 0;
-    int a;
-    struct option long_options[] = {
-            {"mutexl", no_argument, NULL, 'm'},
-            {NULL, 0, NULL, 0}
-    };
-    *mutexl = 0;
-    while((a = getopt_long(argc, argv, "p:", long_options, NULL)) != -1){
-        if(a == 'p'){
-            n = atoi(optarg);
-        }else if(a == 'm'){
-            *mutexl = 1;
-        }else{
-            exit(EXIT_FAILURE);
+timestamp_t time = 0;
+
+balance_t* parse(local_id * n, int argc, char* argv[]){
+    int a = getopt(argc, argv, "p:");
+    if(a == 'p'){
+        *n = atoi(optarg);
+        balance_t* balances = malloc(sizeof(balance_t) * *n);
+        for (int i = 0; i < *n; ++i) {
+            balances[i] = atoi(argv[3 + i]);
         }
-    }
-    if(n < 1 || n > MAX_PROCESS_ID){
+        return balances;
+    }else{
         exit(EXIT_FAILURE);
     }
-    return (local_id) n;
+
 }
 
-static int set_nonblocking(int fd){
-    int flags = fcntl(fd, F_GETFL);
-    if(flags == -1) return -1;
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-}
-
-ProcessDescription init_process_description(local_id n, int mutexl){
+ProcessDescription init_process_description(local_id n){
     ProcessDescription pd;
     pd.ld = 0;
     pd.size = n + 1;
-    pd.mutexl = mutexl;
     pd.events_log = fopen(events_log, "a+");
     FILE * pipe_log;
     pipe_log = fopen(pipes_log, "a+");
@@ -47,7 +32,11 @@ ProcessDescription init_process_description(local_id n, int mutexl){
         for(int j = 0; j < n + 1; j++){
             if(i != j) {
                 int p[2];
-                if(pipe(p) == 0 && set_nonblocking(p[0]) == 0 && set_nonblocking(p[1]) == 0) {
+                if(pipe(p) == 0) {
+                    int flags = fcntl(p[0], F_GETFL);
+                    fcntl(p[0], F_SETFL, flags | O_NONBLOCK);
+                    flags = fcntl(p[1], F_GETFL);
+                    fcntl(p[1], F_SETFL, flags | O_NONBLOCK);
                     pd.pipes[i][j].read = p[0];
                     pd.pipes[i][j].write = p[1];
                     log_pipe_opening(pipe_log, i, j);
@@ -92,52 +81,29 @@ void close_used_pipes(ProcessDescription * pd){
     }
     free(pd->pipes);
 }
-void child_routine(ProcessDescription pd){
-    close_unused_pipes(&pd);
-    init_forks(&pd);
-    log_process_startup(&pd);
-    send_everyone(STARTED, &pd);
-    receive_from_everyone(STARTED, &pd);
-    log_start_message_receival(&pd);
-    do_work(&pd);
-    log_process_completion(&pd);
-    send_everyone(DONE, &pd);
-    receive_all_done(&pd);
-    log_completion_message_receival(&pd);
-    close_used_pipes(&pd);
-    fclose(pd.events_log);
-    exit(0);
-}
 
-int parent_routine(ProcessDescription pd){
-    close_unused_pipes(&pd);
-    receive_from_everyone(STARTED, &pd);
-    log_start_message_receival(&pd);
-    receive_from_everyone(DONE, &pd);
-    log_completion_message_receival(&pd);
-    int status;
-    int exit_code = 0;
-    pid_t pid;
-    pid = wait(&status);
-    while(pid > 0){
-        if(status != 0){
-            exit_code = 1;
-        }
-        pid = wait(&status);
-    }
-    close_used_pipes(&pd);
-    fclose(pd.events_log);
-    return exit_code;
-}
+
+
 
 void send_everyone(MessageType msg_type, ProcessDescription * pd){
-    MessageHeader header = {.s_magic = MESSAGE_MAGIC, .s_type = msg_type};
+    increment_lamport_time();
+    MessageHeader header = {.s_magic = MESSAGE_MAGIC, .s_type = msg_type, .s_local_time = get_lamport_time()};
     Message msg;
     int len = 0;
-    if(msg_type == STARTED){
-        len = sprintf(msg.s_payload, log_started_fmt, pd->ld, getpid(), getppid());
-    }else if(msg_type == DONE) {
-        len = sprintf(msg.s_payload, log_done_fmt, pd->ld);
+    switch(msg_type) {
+        case STARTED:
+            len = sprintf(msg.s_payload, log_started_fmt, get_lamport_time(), pd->ld, getpid(), getppid(),
+                          pd->balance);
+            break;
+        case DONE:
+            len = sprintf(msg.s_payload, log_done_fmt, get_lamport_time(), pd->ld, pd->balance);
+            break;
+        case STOP:
+            len = sprintf(msg.s_payload, stop_msg_fmt, get_lamport_time(), pd->ld);
+            break;
+        default:
+            printf("unsupported message type");
+            exit(1);
     }
     header.s_payload_len = len;
     msg.s_header = header;
@@ -147,26 +113,51 @@ void send_everyone(MessageType msg_type, ProcessDescription * pd){
     }
 }
 
-void receive_from_everyone(MessageType msg_type, ProcessDescription * pd){
-    local_id n = pd->size;
-    for(local_id i = 1; i < n; i++){
-        if(i != pd->ld){
-            Message msg;
-            while(receive(pd, i, &msg)){}
-            if(msg.s_header.s_type != msg_type){
-                printf("process %d failed to receive message from %d\n", pd->ld, i);
-                printf("wrong message type\n");
+void receive_any_from_everyone(MessageType msg_type, ProcessDescription * pd, local_id amount){
+    while(amount > 0) {
+        Message msg;
+        if(!receive_any(pd, &msg)) {
+            if(msg.s_header.s_type == msg_type){
+                amount--;
+                update_lamport_time(msg.s_header.s_local_time);
+            }else{
+                printf("Message of type %d lost\n", msg.s_header.s_type);
                 exit(1);
             }
         }
     }
 }
 
-void receive_all_done(ProcessDescription * pd){
-    Message msg;
-    while(pd->done_received < pd->size - 2){
-        if(receive_any(pd, &msg) == 0){
-            handle_message(pd, pd->last_sender, &msg);
+void receive_from_everyone(MessageType msg_type, ProcessDescription * pd){
+    local_id n = pd-> size;
+    for(int i = 1; i < n; i++){
+        if(i != pd->ld){
+            Message msg;
+            //int c = 0;
+            while(receive(pd, i, &msg)){
+                //c++
+            }
+            if(msg.s_header.s_type != msg_type){
+                printf("wrong message received\n");
+                exit(1);
+            }else{
+                update_lamport_time(msg.s_header.s_local_time);
+            }
         }
     }
+}
+
+timestamp_t get_lamport_time(void){
+    return time;
+}
+
+void increment_lamport_time(void){
+    time++;
+}
+
+void update_lamport_time(timestamp_t in_time){
+    if(in_time > time) {
+        time = in_time;
+    }
+    increment_lamport_time();
 }
