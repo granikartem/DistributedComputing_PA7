@@ -1,7 +1,5 @@
 #include "util.h"
 
-timestamp_t time = 0;
-
 balance_t* parse(local_id * n, int argc, char* argv[]){
     int a = getopt(argc, argv, "p:");
     if(a == 'p'){
@@ -86,20 +84,19 @@ void close_used_pipes(ProcessDescription * pd){
 
 
 void send_everyone(MessageType msg_type, ProcessDescription * pd){
-    increment_lamport_time();
-    MessageHeader header = {.s_magic = MESSAGE_MAGIC, .s_type = msg_type, .s_local_time = get_lamport_time()};
+    MessageHeader header = {.s_magic = MESSAGE_MAGIC, .s_type = msg_type};
     Message msg;
     int len = 0;
     switch(msg_type) {
         case STARTED:
-            len = sprintf(msg.s_payload, log_started_fmt, get_lamport_time(), pd->ld, getpid(), getppid(),
+            len = sprintf(msg.s_payload, log_started_fmt, get_vector_time(), pd->ld, getpid(), getppid(),
                           pd->balance);
             break;
         case DONE:
-            len = sprintf(msg.s_payload, log_done_fmt, get_lamport_time(), pd->ld, pd->balance);
+            len = sprintf(msg.s_payload, log_done_fmt, get_vector_time(), pd->ld, pd->balance);
             break;
         case STOP:
-            len = sprintf(msg.s_payload, stop_msg_fmt, get_lamport_time(), pd->ld);
+            len = sprintf(msg.s_payload, stop_msg_fmt, get_vector_time(), pd->ld);
             break;
         default:
             printf("unsupported message type");
@@ -119,7 +116,6 @@ void receive_any_from_everyone(MessageType msg_type, ProcessDescription * pd, lo
         if(!receive_any(pd, &msg)) {
             if(msg.s_header.s_type == msg_type){
                 amount--;
-                update_lamport_time(msg.s_header.s_local_time);
             }else{
                 printf("Message of type %d lost\n", msg.s_header.s_type);
                 exit(1);
@@ -140,24 +136,7 @@ void receive_from_everyone(MessageType msg_type, ProcessDescription * pd){
             if(msg.s_header.s_type != msg_type){
                 printf("wrong message received\n");
                 exit(1);
-            }else{
-                update_lamport_time(msg.s_header.s_local_time);
             }
         }
     }
-}
-
-timestamp_t get_lamport_time(void){
-    return time;
-}
-
-void increment_lamport_time(void){
-    time++;
-}
-
-void update_lamport_time(timestamp_t in_time){
-    if(in_time > time) {
-        time = in_time;
-    }
-    increment_lamport_time();
 }

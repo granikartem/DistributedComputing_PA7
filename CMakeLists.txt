@@ -11,6 +11,8 @@ add_executable(pa7 main.c
         process.h
         util.c
         util.h
+        vector.c
+        vector.h
         clerk.c
         clerk.h
         client.c

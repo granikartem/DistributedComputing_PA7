@@ -2,6 +2,7 @@
 #include <errno.h>
 #include "ipc.h"
 #include "process.h"
+#include "vector.h"
 
 
 /** Send a message to the process specified by id.
@@ -16,9 +17,11 @@
  */
 int send(void * self, local_id dst, const Message * msg){
     ProcessDescription * pd = (ProcessDescription *) self;
-    size_t len = sizeof(MessageHeader) + msg->s_header.s_payload_len;
+    Message message = *msg;
+    increment_vector_time(&message.s_header);
+    size_t len = sizeof(MessageHeader) + message.s_header.s_payload_len;
     ssize_t written;
-    while((written = write(pd->pipes[pd->ld][dst].write, msg, len)) < 0){
+    while((written = write(pd->pipes[pd->ld][dst].write, &message, len)) < 0){
         if(errno != EAGAIN) return 1;
     }
     if((size_t) written != len) return 1;
@@ -73,6 +76,7 @@ int receive(void * self, local_id from, Message * msg){
             return 1;
         }
     }
+    update_vector_time(&msg->s_header);
     return 0;
 }
 
