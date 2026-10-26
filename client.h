@@ -2,8 +2,8 @@
 // Created by ubuntu on 10/31/23.
 //
 
-#ifndef PA3_CLIENT_H
-#define PA3_CLIENT_H
+#ifndef PA7_CLIENT_H
+#define PA7_CLIENT_H
 
 #include "util.h"
 #include "banking.h"
@@ -11,4 +11,6 @@
 
 int client_routine(ProcessDescription pd);
 
-#endif //PA3_CLIENT_H
+void total_sum_snapshot(void);
+
+#endif //PA7_CLIENT_H

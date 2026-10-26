@@ -11,7 +11,7 @@ int main(int argc, char * argv[]){
         switch(fork()){
             case 0:
                 pd.ld = i;
-                ProcessDescription clerk_pd = {.pipes = pd.pipes, .events_log = pd.events_log, .ld = i, .size = pd.size, .type = CLERK, .balance = balances[i - 1]};
+                ProcessDescription clerk_pd = {.pipes = pd.pipes, .events_log = pd.events_log, .ld = i, .size = pd.size, .balance = balances[i - 1]};
                 clerk_routine(clerk_pd);
             case -1:
                 printf("Error spawning child process\n");

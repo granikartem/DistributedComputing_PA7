@@ -2,8 +2,8 @@
 // Created by ubuntu on 10/31/23.
 //
 
-#ifndef PA3_CLERK_H
-#define PA3_CLERK_H
+#ifndef PA7_CLERK_H
+#define PA7_CLERK_H
 
 #include "process.h"
 #include "util.h"
@@ -12,10 +12,8 @@
 
 void clerk_routine(ProcessDescription pd);
 
-int useful_job(ProcessDescription * pd, BalanceHistory * bh);
+int useful_job(ProcessDescription * pd);
 
-void handle_transfer(ProcessDescription * pd, Message * msg, BalanceHistory * bh);
+void handle_transfer(ProcessDescription * pd, Message * msg);
 
-void balance_update(BalanceState * state, BalanceHistory * history);
-
-#endif //PA3_CLERK_H
+#endif //PA7_CLERK_H

@@ -1,5 +1,5 @@
-#ifndef PA3_LOGGING_H
-#define PA3_LOGGING_H
+#ifndef PA7_LOGGING_H
+#define PA7_LOGGING_H
 
 #include <stdio.h>
 #include "common.h"
@@ -23,4 +23,4 @@ void log_transfer_initiation(timestamp_t timestamp, ProcessDescription * pd, bal
 
 void log_transfer_receival(timestamp_t timestamp, ProcessDescription * pd, balance_t payload, local_id src);
 
-#endif //PA3_LOGGING_H
+#endif //PA7_LOGGING_H

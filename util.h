@@ -1,5 +1,5 @@
-#ifndef PA3_UTIL_H
-#define PA3_UTIL_H
+#ifndef PA7_UTIL_H
+#define PA7_UTIL_H
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -29,8 +29,10 @@ void receive_from_everyone(MessageType msg_type, ProcessDescription * pd);
 
 void receive_any_from_everyone(MessageType msg_type, ProcessDescription * pd, local_id amount);
 
+timestamp_t get_lamport_time(void);
+
 void increment_lamport_time(void);
 
 void update_lamport_time(timestamp_t in_time);
 
-#endif //PA3_UTIL_H
+#endif //PA7_UTIL_H
