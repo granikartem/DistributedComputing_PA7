@@ -4,9 +4,12 @@
 
 #include "client.h"
 
+static ProcessDescription * client_pd;
+
 int client_routine(ProcessDescription pd){
     pd.ld = 0;
     init_vector_time(pd.ld);
+    client_pd = &pd;
     close_unused_pipes(&pd);
     receive_from_everyone(STARTED, &pd);
     log_start_message_receival(get_vector_time(), &pd);
@@ -46,4 +49,32 @@ void transfer(void * parent_data, local_id src, local_id dst, balance_t amount){
 }
 
 void total_sum_snapshot(void){
+    ProcessDescription * pd = client_pd;
+    timestamp_t time[MAX_PROCESS_ID];
+    copy_vector_time(time);
+    time[pd->ld]++;
+    MessageHeader vtime_header = {.s_magic = MESSAGE_MAGIC, .s_type = SNAPSHOT_VTIME, .s_payload_len = sizeof(time)};
+    Message vtime_msg = {.s_header = vtime_header};
+    memcpy(vtime_msg.s_payload, time, sizeof(time));
+    send_multicast(pd, &vtime_msg);
+    receive_from_everyone(SNAPSHOT_ACK, pd);
+    MessageHeader empty_header = {.s_magic = MESSAGE_MAGIC, .s_type = EMPTY, .s_payload_len = 0};
+    Message empty_msg = {.s_header = empty_header, .s_payload = ""};
+    send_multicast(pd, &empty_msg);
+    balance_t balance = 0;
+    balance_t pending = 0;
+    for(local_id i = 1; i < pd->size; i++){
+        Message state_msg;
+        while(receive(pd, i, &state_msg)){
+        }
+        if(state_msg.s_header.s_type != BALANCE_STATE){
+            printf("Not BALANCE_STATE received!\n");
+            exit(2);
+        }
+        BalanceState state;
+        memcpy(&state, state_msg.s_payload, sizeof(BalanceState));
+        balance += state.s_balance;
+        pending += state.s_balance_pending_in;
+    }
+    log_snapshot(pd, time, balance, pending);
 }

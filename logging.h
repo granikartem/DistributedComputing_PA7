@@ -23,4 +23,6 @@ void log_transfer_initiation(timestamp_t timestamp, ProcessDescription * pd, bal
 
 void log_transfer_receival(timestamp_t timestamp, ProcessDescription * pd, balance_t payload, local_id src);
 
+void log_snapshot(ProcessDescription * pd, const timestamp_t * time, balance_t balance, balance_t pending);
+
 #endif //PA7_LOGGING_H

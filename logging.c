@@ -33,3 +33,14 @@ void log_transfer_receival(timestamp_t timestamp, ProcessDescription * pd, balan
     printf(log_transfer_in_fmt, timestamp, pd->ld, payload, src);
     fprintf(pd->events_log, log_transfer_in_fmt, timestamp, pd->ld, payload, src);
 }
+
+void log_snapshot(ProcessDescription * pd, const timestamp_t * time, balance_t balance, balance_t pending){
+    char line[MAX_PAYLOAD_LEN];
+    int len = sprintf(line, "[");
+    for(local_id i = 0; i < pd->size; i++){
+        len += sprintf(line + len, "%s%d", i ? ", " : "", time[i]);
+    }
+    sprintf(line + len, "] $%d $%d\n", balance, pending);
+    printf("%s", line);
+    fprintf(pd->events_log, "%s", line);
+}
