@@ -24,6 +24,8 @@ void clerk_routine(ProcessDescription pd);
 
 int useful_job(ProcessDescription * pd);
 
+void receive_dones(ProcessDescription * pd, int dones_left);
+
 void handle_transfer(ProcessDescription * pd, Message * msg);
 
 void handle_snapshot_vtime(ProcessDescription * pd, BalanceSnapshot * snapshot, Message * msg);

@@ -14,7 +14,7 @@ void clerk_routine(ProcessDescription pd){
     int dones_left = pd.size - 2 - useful_job(&pd);
     log_process_completion(get_vector_time(), &pd);
     send_everyone(DONE, &pd);
-    receive_any_from_everyone(DONE, &pd, dones_left);
+    receive_dones(&pd, dones_left);
     log_completion_message_receival(get_vector_time(), &pd);
     close_used_pipes(&pd);
     fclose(pd.events_log);
@@ -46,6 +46,25 @@ int useful_job(ProcessDescription * pd) {
             default:
                 printf("%d\n", msg.s_header.s_type);
                 printf("Message type not supported\n");
+                exit(1);
+        }
+    }
+}
+
+void receive_dones(ProcessDescription * pd, int dones_left){
+    while (dones_left > 0) {
+        Message msg;
+        while (receive_any(pd, &msg)) {
+        }
+        switch (msg.s_header.s_type) {
+            case DONE:
+                dones_left--;
+                break;
+            case TRANSFER:
+                handle_transfer(pd, &msg);
+                break;
+            default:
+                printf("Message of type %d lost\n", msg.s_header.s_type);
                 exit(1);
         }
     }

@@ -110,20 +110,6 @@ void send_everyone(MessageType msg_type, ProcessDescription * pd){
     }
 }
 
-void receive_any_from_everyone(MessageType msg_type, ProcessDescription * pd, local_id amount){
-    while(amount > 0) {
-        Message msg;
-        if(!receive_any(pd, &msg)) {
-            if(msg.s_header.s_type == msg_type){
-                amount--;
-            }else{
-                printf("Message of type %d lost\n", msg.s_header.s_type);
-                exit(1);
-            }
-        }
-    }
-}
-
 void receive_from_everyone(MessageType msg_type, ProcessDescription * pd){
     local_id n = pd-> size;
     for(int i = 1; i < n; i++){

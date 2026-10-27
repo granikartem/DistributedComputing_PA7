@@ -28,6 +28,4 @@ void send_everyone(MessageType msg_type, ProcessDescription * pd);
 
 void receive_from_everyone(MessageType msg_type, ProcessDescription * pd);
 
-void receive_any_from_everyone(MessageType msg_type, ProcessDescription * pd, local_id amount);
-
 #endif //PA7_UTIL_H
