@@ -3,6 +3,7 @@
 #include "ipc.h"
 #include "process.h"
 #include "vector.h"
+#include "logging.h"
 
 
 /** Send a message to the process specified by id.
@@ -25,6 +26,7 @@ int send(void * self, local_id dst, const Message * msg){
         if(errno != EAGAIN) return 1;
     }
     if((size_t) written != len) return 1;
+    if(message.s_header.s_type == EMPTY) log_empty_sending(get_vector_time(), pd, dst);
     return 0;
 }
 
@@ -77,6 +79,7 @@ int receive(void * self, local_id from, Message * msg){
         }
     }
     update_vector_time(&msg->s_header);
+    if(msg->s_header.s_type == EMPTY) log_empty_receival(get_vector_time(), pd, from);
     return 0;
 }
 

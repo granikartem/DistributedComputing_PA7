@@ -1,18 +1,27 @@
 #include "util.h"
 
 balance_t* parse(local_id * n, int argc, char* argv[]){
-    int a = getopt(argc, argv, "p:");
-    if(a == 'p'){
-        *n = atoi(optarg);
-        balance_t* balances = malloc(sizeof(balance_t) * *n);
-        for (int i = 0; i < *n; ++i) {
-            balances[i] = atoi(argv[3 + i]);
+    int opt;
+    int has_n = 0;
+    while((opt = getopt(argc, argv, "p:v")) != -1){
+        switch(opt){
+            case 'p':
+                *n = atoi(optarg);
+                has_n = 1;
+                break;
+            case 'v':
+                set_verbose_logging(1);
+                break;
+            default:
+                exit(EXIT_FAILURE);
         }
-        return balances;
-    }else{
-        exit(EXIT_FAILURE);
     }
-
+    if(!has_n || argc - optind < *n) exit(EXIT_FAILURE);
+    balance_t* balances = malloc(sizeof(balance_t) * *n);
+    for (int i = 0; i < *n; ++i) {
+        balances[i] = atoi(argv[optind + i]);
+    }
+    return balances;
 }
 
 ProcessDescription init_process_description(local_id n){

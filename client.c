@@ -62,7 +62,9 @@ void total_sum_snapshot(void){
     Message empty_msg = {.s_header = empty_header, .s_payload = ""};
     send_multicast(pd, &empty_msg);
     balance_t balance = 0;
+    balance_t balance_array[MAX_PROCESS_ID];
     balance_t pending = 0;
+    balance_t pending_array[MAX_PROCESS_ID];
     for(local_id i = 1; i < pd->size; i++){
         Message state_msg;
         while(receive(pd, i, &state_msg)){
@@ -74,7 +76,9 @@ void total_sum_snapshot(void){
         BalanceState state;
         memcpy(&state, state_msg.s_payload, sizeof(BalanceState));
         balance += state.s_balance;
+        balance_array[i] = state.s_balance;
         pending += state.s_balance_pending_in;
+        pending_array[i] = state.s_balance_pending_in;
     }
-    log_snapshot(pd, time, balance, pending);
+    log_snapshot(pd, time, balance, balance_array, pending, pending_array);
 }

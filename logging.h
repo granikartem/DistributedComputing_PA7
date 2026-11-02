@@ -23,6 +23,13 @@ void log_transfer_initiation(timestamp_t timestamp, ProcessDescription * pd, bal
 
 void log_transfer_receival(timestamp_t timestamp, ProcessDescription * pd, balance_t payload, local_id src);
 
-void log_snapshot(ProcessDescription * pd, const timestamp_t * time, balance_t balance, balance_t pending);
+void log_snapshot(ProcessDescription * pd, const timestamp_t * time, balance_t balance, balance_t * balance_array, balance_t pending, balance_t * pending_array);
+
+/** Enables EMPTY send/receive lines (-v). Set before fork, children inherit it. */
+void set_verbose_logging(int enabled);
+
+void log_empty_sending(timestamp_t timestamp, ProcessDescription * pd, local_id dst);
+
+void log_empty_receival(timestamp_t timestamp, ProcessDescription * pd, local_id src);
 
 #endif //PA7_LOGGING_H
